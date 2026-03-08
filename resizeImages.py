@@ -13,6 +13,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", default="resizedTrainingImages", help="Destination directory.")
     parser.add_argument("--width", type=int, default=100, help="Target width.")
     parser.add_argument("--height", type=int, default=100, help="Target height.")
+    parser.add_argument(
+        "--progress-interval",
+        type=int,
+        default=50,
+        help="Print progress every N saved images; set to 0 to disable periodic progress logs.",
+    )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Print each saved output path.",
+    )
     return parser.parse_args()
 
 
@@ -50,9 +61,15 @@ def main() -> None:
             )
 
             output_path = target_folder / filename
-            cv2.imwrite(str(output_path), resized_image)
+            if not cv2.imwrite(str(output_path), resized_image):
+                print(f"Failed to save image: {output_path}")
+                continue
+
             count += 1
-            print(f"Saved: {output_path}")
+            if args.verbose:
+                print(f"Saved: {output_path}")
+            elif args.progress_interval > 0 and count % args.progress_interval == 0:
+                print(f"Progress: saved {count} image(s)...")
 
     print(f"Done. Resized {count} image(s).")
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import List, Optional, Sequence, Tuple
 
 import cv2
 import numpy as np
@@ -18,6 +18,16 @@ _FACE_CASCADE: Optional[cv2.CascadeClassifier] = None
 
 
 Rect = Tuple[int, int, int, int]
+
+
+def _scale_face(face: Sequence[int], scale_factor: float, image_shape: Tuple[int, int]) -> Rect:
+    height, width = image_shape
+    x, y, w, h = (int(round(value * scale_factor)) for value in face)
+    x = max(0, min(x, width - 1))
+    y = max(0, min(y, height - 1))
+    w = max(1, min(w, width - x))
+    h = max(1, min(h, height - y))
+    return x, y, w, h
 
 
 def _resolve_cascade_path(custom_path: Optional[str] = None) -> str:
@@ -71,22 +81,63 @@ def extract_face_roi(gray_img: np.ndarray, face: Rect, target_size: Optional[Tup
     return roi
 
 
+def resize_for_display(image: np.ndarray, width: int, height: int) -> np.ndarray:
+    """Resize only when needed so preview code avoids extra per-frame work."""
+    if width <= 0 or height <= 0:
+        return image
+
+    current_height, current_width = image.shape[:2]
+    if current_width == width and current_height == height:
+        return image
+
+    return cv2.resize(image, (width, height), interpolation=cv2.INTER_AREA)
+
+
 def faceDetection(
     test_img: np.ndarray,
     scaleFactor: float = 1.2,
     minNeighbors: int = 5,
     minSize: Tuple[int, int] = (60, 60),
     cascade_path: Optional[str] = None,
+    detection_scale: float = 1.0,
 ) -> Tuple[List[Rect], np.ndarray]:
     """Backward-compatible helper used by the original scripts."""
+    if not 0 < detection_scale <= 1.0:
+        raise ValueError("detection_scale must be between 0 and 1.")
+
     gray_img = preprocess_frame(test_img)
     face_haar_cascade = get_face_cascade(cascade_path)
+    detection_img = gray_img
+    detection_min_size = minSize
+
+    if detection_scale < 1.0:
+        detection_img = cv2.resize(
+            gray_img,
+            None,
+            fx=detection_scale,
+            fy=detection_scale,
+            interpolation=cv2.INTER_AREA,
+        )
+        detection_min_size = (
+            max(1, int(round(minSize[0] * detection_scale))),
+            max(1, int(round(minSize[1] * detection_scale))),
+        )
+
     faces = face_haar_cascade.detectMultiScale(
-        gray_img,
+        detection_img,
         scaleFactor=scaleFactor,
         minNeighbors=minNeighbors,
-        minSize=minSize,
+        minSize=detection_min_size,
     )
+
+    if detection_scale < 1.0:
+        scale_back = 1.0 / detection_scale
+        scaled_faces = [
+            _scale_face(face, scale_back, gray_img.shape[:2])
+            for face in faces
+        ]
+        return scaled_faces, gray_img
+
     return [tuple(map(int, face)) for face in faces], gray_img
 
 

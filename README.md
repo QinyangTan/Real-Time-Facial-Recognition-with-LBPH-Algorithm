@@ -26,15 +26,15 @@ The methodology also notes that lower LBPH confidence values indicate a better m
 
 ## Repository Structure
 
-The current repository contains these main files:
-- `faceRecognition.py` - shared helper functions for detection, training, drawing, and labeling
+The current repository contains these main source files:
+- `faceRecognition.py` - shared helper functions for detection, training, drawing, and display resizing
 - `tester.py` - trains the recognizer and runs recognition on a single test image
 - `videoTester.py` - runs real-time webcam recognition using a saved LBPH model
 - `videotoimg.py` - captures webcam frames and saves them as images
 - `resizeImages.py` - resizes the training dataset images
-- `trainingData.yml` - saved OpenCV LBPH model
-- sample frame images (`frame7.jpg`, `frame15.jpg`, etc.)
-- the original `Readme.md` file, which currently contains only a short setup guide
+- `README.md` - project overview, workflow, and usage notes
+
+Generated assets such as `trainingData.yml`, captured frame images, and the `trainingImages/` / `TestImages/` folders are expected at runtime but may not be committed to the repository.
 
 ## How the Pipeline Works
 
@@ -106,7 +106,13 @@ Notes:
 python videotoimg.py
 ```
 
-This script captures webcam frames and stores them as JPG files.
+This script captures webcam frames and stores them as JPG files. Frame writes are queued onto a background worker so disk I/O does not block the webcam loop as aggressively.
+
+Useful options:
+
+```bash
+python videotoimg.py --save-every 8 --writer-queue-size 8 --verbose
+```
 
 ### Resize collected images
 
@@ -114,7 +120,13 @@ This script captures webcam frames and stores them as JPG files.
 python resizeImages.py
 ```
 
-Use this step if you want a uniform training set size before training.
+Use this step if you want a uniform training set size before training. By default it prints summary/progress output instead of logging every single file.
+
+Useful options:
+
+```bash
+python resizeImages.py --width 100 --height 100 --progress-interval 50
+```
 
 ### Train the model and test on one image
 
@@ -137,27 +149,30 @@ python videoTester.py
 
 This script loads the saved `trainingData.yml` model and performs recognition on frames captured from your webcam.
 
-## Current Limitations in the Original Code
+Useful options:
 
-After reviewing the current repository, these are the main issues worth addressing:
+```bash
+python videoTester.py --detect-scale 0.75
+python videoTester.py --detect-scale 1.0 --log-predictions
+```
 
-1. **The cascade classifier is reloaded on every detection call**
-   - In the current `faceRecognition.py`, the cascade is constructed inside `faceDetection`, which adds avoidable overhead on every frame.
+The default `--detect-scale 0.75` runs face detection on a slightly smaller image and maps detections back to the full frame, which reduces CPU load in the live loop while preserving the full-size ROI for recognition.
 
-2. **Face ROI slicing has width/height bugs**
-   - Several slices use `y:y+w` or `x:x+h` instead of `y:y+h` and `x:x+w`, which can crop the wrong region and reduce recognition accuracy.
+## Current Limitations
 
-3. **`videoTester.py` performs redundant drawing and display work**
-   - The current loop draws rectangles once, displays the frame, then loops again to predict, redraw, and display again.
+After the current cleanup pass, these are the main limitations that still remain:
 
-4. **The confidence logic in live recognition is inconsistent**
-   - The write-up says lower confidence is better, but the current `videoTester.py` labels a face as recognized when confidence is greater than the threshold.
+1. **There is no automated test suite**
+   - Validation is still manual and depends on local image assets plus webcam availability.
 
-5. **The training/inference flow is tightly coupled**
-   - `tester.py` retrains the model every run by default, even when a saved `trainingData.yml` already exists.
+2. **Label mappings are still hard-coded**
+   - `tester.py` and `videoTester.py` both keep a local integer-label-to-name map, so keeping those mappings synchronized is still a maintenance task.
 
-6. **The source files are stored as one-line scripts**
-   - This makes maintenance and debugging much harder than necessary.
+3. **Recognition accuracy is still sensitive to dataset quality**
+   - Haar cascade + LBPH is lightweight, but its results can still degrade under pose changes, blur, or uneven lighting.
+
+4. **The live webcam scripts still depend on OpenCV GUI APIs**
+   - That makes them harder to run in headless or CI environments without additional wrappers.
 
 ## Performance Improvements Applied in the Updated Version
 
@@ -170,6 +185,9 @@ The improved version I prepared focuses on practical speed and correctness gains
 - remove duplicate `imshow` / `waitKey` calls from the webcam loop
 - save video frames at a configurable interval instead of every single frame
 - add basic argument parsing and safer error handling
+- run live face detection on an optional downscaled frame before mapping results back
+- move webcam frame writes onto a bounded background worker queue
+- reduce batch-script logging overhead with summary/progress output by default
 - make the code easier to extend and maintain
 
 These changes should improve real-time responsiveness and make the results more stable under varying lighting.
@@ -185,7 +203,6 @@ Your public Google Scholar entry for the provided scholar ID currently presents 
 ## Future Improvements
 
 If you want to push this further, the next best upgrades would be:
-- detect faces on a downscaled frame and map boxes back to the original image
 - add a configurable JSON file for label-to-name mappings
 - automatically skip blurry or duplicate captured frames
 - evaluate precision/recall or false-accept / false-reject tradeoffs
