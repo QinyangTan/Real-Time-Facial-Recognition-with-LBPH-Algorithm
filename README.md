@@ -2,6 +2,11 @@
 
 A lightweight real-time facial recognition project built with Python and OpenCV using the LBPH (Local Binary Patterns Histograms) algorithm.
 
+## Research Profile
+
+- Google Scholar: [Qinyang Tan](https://scholar.google.com/citations?hl=en&user=k5zfILgAAAAJ)
+- Published research: [Real-time facial recognition based on LBPH algorithm](https://docs.google.com/document/d/1P2Jtxe0nm4aScARmv-cc0-lPFWUkaTXgT8WxlM0JTj8/edit?usp=sharing)
+
 This repository implements an end-to-end workflow for:
 - collecting frames from a webcam
 - preparing training images
@@ -32,9 +37,7 @@ The current repository contains these main files:
 - `videoTester.py` - runs real-time webcam recognition using a saved LBPH model
 - `videotoimg.py` - captures webcam frames and saves them as images
 - `resizeImages.py` - resizes the training dataset images
-- `trainingData.yml` - saved OpenCV LBPH model
-- sample frame images (`frame7.jpg`, `frame15.jpg`, etc.)
-- the original `Readme.md` file, which currently contains only a short setup guide
+- generated local assets such as `trainingData.yml`, training images, and captured frames
 
 ## How the Pipeline Works
 
@@ -178,7 +181,7 @@ These changes should improve real-time responsiveness and make the results more 
 
 This repository is also a portfolio-quality research project. Based on the materials you shared, it represents an end-to-end computer vision workflow: face detection, preprocessing, LBPH training, webcam inference, and threshold-based evaluation.
 
-Your public Google Scholar entry for the provided scholar ID currently presents this work in the context of Computer Vision and Machine Learning, which fits well with positioning this repository as both:
+Your [Google Scholar profile](https://scholar.google.com/citations?hl=en&user=k5zfILgAAAAJ) and the accompanying write-up [Real-time facial recognition based on LBPH algorithm](https://docs.google.com/document/d/1P2Jtxe0nm4aScARmv-cc0-lPFWUkaTXgT8WxlM0JTj8/edit?usp=sharing) position this repository as both:
 - a practical OpenCV face recognition implementation
 - a small research prototype focused on performance tradeoff analysis
 
@@ -198,6 +201,8 @@ If you want to push this further, the next best upgrades would be:
 **Qinyang Tan**
 
 This project reflects strong hands-on work in classical computer vision, applied machine learning, and reproducible experimentation. It is a good showcase of practical ML engineering: building a full pipeline, measuring performance, and identifying threshold tradeoffs instead of treating the model as a black box.
+
+- Google Scholar: [Qinyang Tan](https://scholar.google.com/citations?hl=en&user=k5zfILgAAAAJ)
 
 ## License
 

@@ -1,0 +1,13 @@
+.DS_Store
+.idea/
+__pycache__/
+*.pyc
+
+# Local datasets, model artifacts, and captured samples
+trainingData.yml
+trainingImages/
+resizedTrainingImages/
+capturedFrames/
+TestImages/
+frame*.jpg
+HaarCascade/
